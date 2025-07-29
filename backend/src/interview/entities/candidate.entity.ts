@@ -1,5 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { Response } from './response.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from "typeorm";
+import { Response } from "./response.entity";
 
 @Entity()
 export class Candidate {
@@ -21,6 +27,6 @@ export class Candidate {
   @CreateDateColumn()
   createdAt: Date;
 
-  @OneToMany(() => Response, response => response.candidate)
+  @OneToMany(() => Response, (response) => response.candidate)
   responses: Response[];
-} 
+}

@@ -1,4 +1,4 @@
-import { IsNumber, Min, Max } from 'class-validator';
+import { IsNumber, Min, Max } from "class-validator";
 
 export class SubmitResponseDto {
   @IsNumber()
@@ -8,4 +8,4 @@ export class SubmitResponseDto {
   @Min(0)
   @Max(3)
   selectedAnswer: number;
-} 
+}

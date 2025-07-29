@@ -1,6 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from 'typeorm';
-import { Candidate } from './candidate.entity';
-import { Question } from './question.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+} from "typeorm";
+import { Candidate } from "./candidate.entity";
+import { Question } from "./question.entity";
 
 @Entity()
 export class Response {
@@ -19,9 +25,9 @@ export class Response {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => Candidate, candidate => candidate.responses)
+  @ManyToOne(() => Candidate, (candidate) => candidate.responses)
   candidate: Candidate;
 
-  @ManyToOne(() => Question, question => question.responses)
+  @ManyToOne(() => Question, (question) => question.responses)
   question: Question;
-} 
+}
