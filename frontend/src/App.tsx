@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Candidate, CreateCandidateRequest } from './types';
 import { interviewApi } from './services/api';
 import { CandidateForm } from './components/CandidateForm';
 import { Interview } from './components/Interview';
+import { ReviewDashboard } from './components/ReviewDashboard';
 
 function App() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [showReviewDashboard, setShowReviewDashboard] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +38,10 @@ function App() {
     setError(null);
   };
 
+  if (showReviewDashboard) {
+    return <ReviewDashboard onBack={() => setShowReviewDashboard(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {!candidate ? (
@@ -59,6 +65,13 @@ function App() {
               <p className="text-sm text-gray-500">
                 This is a technical interview application. Please provide your information to begin.
               </p>
+              <button
+                type="button"
+                onClick={() => setShowReviewDashboard(true)}
+                className="mt-4 text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Open review dashboard
+              </button>
             </div>
           </div>
         </div>
@@ -81,4 +94,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

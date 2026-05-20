@@ -7,6 +7,58 @@ import { Response } from "./entities/response.entity";
 import { CreateCandidateDto } from "./dto/create-candidate.dto";
 import { SubmitResponseDto } from "./dto/submit-response.dto";
 
+export interface ReviewDashboardStatusConfig {
+  label: string;
+  minimumScore: number;
+  nextStep: string;
+}
+
+export interface ReviewDashboardCandidateSummary {
+  candidateId: number;
+  name: string;
+  email: string;
+  position: string;
+  submittedAt: Date;
+  totalQuestions: number;
+  answeredQuestions: number;
+  correctAnswers: number;
+  totalPointsEarned: number;
+  score: number;
+  status: string;
+  nextStep: string;
+}
+
+export interface ReviewDashboardSummary {
+  totalCandidates: number;
+  averageScore: number;
+  candidatesNeedingReview: number;
+  completedCandidates: number;
+}
+
+export interface ReviewDashboardResponse {
+  generatedAt: string;
+  summary: ReviewDashboardSummary;
+  candidates: ReviewDashboardCandidateSummary[];
+}
+
+const reviewDashboardStatusPipeline: ReviewDashboardStatusConfig[] = [
+  {
+    label: "Strong",
+    minimumScore: 80,
+    nextStep: "Move to hiring manager review",
+  },
+  {
+    label: "Review",
+    minimumScore: 50,
+    nextStep: "Review answers before deciding",
+  },
+  {
+    label: "Needs Follow Up",
+    minimumScore: 0,
+    nextStep: "Send follow-up exercise",
+  },
+];
+
 @Injectable()
 export class InterviewService {
   constructor(
@@ -96,6 +148,106 @@ export class InterviewService {
       correctAnswers,
       score: Math.round(score * 100) / 100,
       responses: candidate.responses,
+    };
+  }
+
+  async getAllResults() {
+    return await this.responseRepository.find({
+      relations: ["candidate", "question"],
+    });
+  }
+
+  async getReviewDashboard(): Promise<ReviewDashboardResponse> {
+    const questions = await this.questionRepository.find({
+      order: { id: "ASC" },
+    });
+    const candidates = await this.candidateRepository.find({
+      relations: ["responses", "responses.question"],
+      order: { createdAt: "DESC" },
+    });
+
+    const totalQuestionCount = this.resolveTotalQuestionCount(questions);
+    const candidateSummaries = candidates.map((candidate) =>
+      this.mapCandidateIntoDashboardSummary(candidate, totalQuestionCount),
+    );
+
+    return this.composeReviewDashboardResponse(candidateSummaries);
+  }
+
+  private resolveTotalQuestionCount(questions: Question[]): number {
+    return questions.length;
+  }
+
+  private mapCandidateIntoDashboardSummary(
+    candidate: Candidate,
+    totalQuestionCount: number,
+  ): ReviewDashboardCandidateSummary {
+    const responses = candidate.responses ?? [];
+    const correctAnswers = this.calculateCorrectAnswerCount(responses);
+    const totalPointsEarned = this.calculateEarnedPoints(responses);
+    const score = this.calculateScore(correctAnswers, totalQuestionCount);
+    const statusConfig = this.resolveStatusConfiguration(score);
+
+    return {
+      candidateId: candidate.id,
+      name: candidate.name,
+      email: candidate.email,
+      position: candidate.position || "Unspecified",
+      submittedAt: candidate.createdAt,
+      totalQuestions: totalQuestionCount,
+      answeredQuestions: responses.length,
+      correctAnswers,
+      totalPointsEarned,
+      score,
+      status: statusConfig.label,
+      nextStep: statusConfig.nextStep,
+    };
+  }
+
+  private calculateCorrectAnswerCount(responses: Response[]): number {
+    return responses.filter((response) => response.isCorrect).length;
+  }
+
+  private calculateEarnedPoints(responses: Response[]): number {
+    return responses.reduce((sum, response) => sum + response.pointsEarned, 0);
+  }
+
+  private calculateScore(correctAnswers: number, totalQuestionCount: number): number {
+    const score = totalQuestionCount > 0 ? (correctAnswers / totalQuestionCount) * 100 : 0;
+    return Math.round(score * 100) / 100;
+  }
+
+  private resolveStatusConfiguration(score: number): ReviewDashboardStatusConfig {
+    const matchingStatus = reviewDashboardStatusPipeline.find(
+      (statusConfig) => score >= statusConfig.minimumScore,
+    );
+
+    return matchingStatus ?? reviewDashboardStatusPipeline[reviewDashboardStatusPipeline.length - 1];
+  }
+
+  private composeReviewDashboardResponse(
+    candidates: ReviewDashboardCandidateSummary[],
+  ): ReviewDashboardResponse {
+    const completedCandidates = candidates.filter(
+      (candidate) => candidate.answeredQuestions === candidate.totalQuestions,
+    ).length;
+    const candidatesNeedingReview = candidates.filter(
+      (candidate) => candidate.status !== "Strong",
+    ).length;
+    const averageScore =
+      candidates.length > 0
+        ? candidates.reduce((sum, candidate) => sum + candidate.score, 0) / candidates.length
+        : 0;
+
+    return {
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalCandidates: candidates.length,
+        averageScore: Math.round(averageScore * 100) / 100,
+        candidatesNeedingReview,
+        completedCandidates,
+      },
+      candidates,
     };
   }
 

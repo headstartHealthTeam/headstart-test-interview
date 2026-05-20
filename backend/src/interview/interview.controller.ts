@@ -35,6 +35,16 @@ export class InterviewController {
     );
   }
 
+  @Get("results/all")
+  async getAllResults() {
+    return await this.interviewService.getAllResults();
+  }
+
+  @Get("review-dashboard")
+  async getReviewDashboard() {
+    return await this.interviewService.getReviewDashboard();
+  }
+
   @Get("results/:candidateId")
   async getCandidateResults(
     @Param("candidateId", ParseIntPipe) candidateId: number,
