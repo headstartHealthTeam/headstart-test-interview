@@ -68,7 +68,7 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({ results }) => {
       <div className="border-t pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Question Details</h3>
         <div className="space-y-3">
-          {responses.map((response, index) => (
+          {responses.map((response) => (
             <div key={response.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-600">Q{response.question.id}</span>
@@ -96,4 +96,4 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({ results }) => {
       </div>
     </div>
   );
-}; 
+};
