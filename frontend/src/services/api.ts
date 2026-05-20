@@ -5,7 +5,8 @@ import {
   Response, 
   InterviewResults, 
   CreateCandidateRequest, 
-  SubmitResponseRequest 
+  SubmitResponseRequest,
+  ReviewDashboardResponse,
 } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000/api';
@@ -47,4 +48,10 @@ export const interviewApi = {
     const response = await api.post('/interview/seed');
     return response.data;
   },
-}; 
+
+  // Get review dashboard data
+  getReviewDashboard: async (): Promise<ReviewDashboardResponse> => {
+    const response = await api.get('/interview/review-dashboard');
+    return response.data;
+  },
+};

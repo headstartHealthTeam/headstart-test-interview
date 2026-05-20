@@ -45,4 +45,16 @@ export interface CreateCandidateRequest {
 export interface SubmitResponseRequest {
   questionId: number;
   selectedAnswer: number;
-} 
+}
+
+export interface ReviewDashboardCandidate {
+  candidateId: number; name: string; email: string; position: string; submittedAt: string;
+  totalQuestions: number; answeredQuestions: number; correctAnswers: number;
+  score: number; status: string; nextStep: string;
+}
+
+export interface ReviewDashboardResponse {
+  generatedAt: string;
+  summary: { totalCandidates: number; averageScore: number; candidatesNeedingReview: number };
+  candidates: ReviewDashboardCandidate[];
+}

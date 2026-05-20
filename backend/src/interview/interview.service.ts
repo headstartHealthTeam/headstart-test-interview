@@ -99,6 +99,50 @@ export class InterviewService {
     };
   }
 
+  async getReviewDashboard() {
+    const questions = await this.questionRepository.find();
+    const candidates = await this.candidateRepository.find({
+      relations: ["responses", "responses.question"],
+      order: { createdAt: "DESC" },
+    });
+    const totalQuestions = questions.length;
+
+    const rows = candidates.map((candidate) => {
+      const responses = candidate.responses ?? [];
+      const correctAnswers = responses.filter((response) => response.isCorrect).length;
+      const score = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+      const status = score >= 80 ? "Strong" : score >= 50 ? "Review" : "Needs Follow Up";
+      return {
+        candidateId: candidate.id,
+        name: candidate.name,
+        email: candidate.email,
+        position: candidate.position || "Unspecified",
+        submittedAt: candidate.createdAt,
+        totalQuestions,
+        answeredQuestions: responses.length,
+        correctAnswers,
+        score,
+        status,
+        nextStep: status === "Strong" ? "Move to manager review" : "Review manually",
+      };
+    });
+
+    return {
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalCandidates: rows.length,
+        averageScore: rows.length
+          ? Math.round(rows.reduce((sum, candidate) => sum + candidate.score, 0) / rows.length)
+          : 0,
+        candidatesNeedingReview: rows.filter((candidate) => candidate.status !== "Strong").length,
+        completedCandidates: rows.filter(
+          (candidate) => candidate.answeredQuestions === candidate.totalQuestions,
+        ).length,
+      },
+      candidates: rows,
+    };
+  }
+
   async seedQuestions() {
     const questions = [
       {
